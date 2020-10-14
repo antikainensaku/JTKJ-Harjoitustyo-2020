@@ -1,0 +1,12 @@
+package.xdc
+package.xs
+package/xconfig_labra.sch
+package/.vers_g180
+package/.vers_r170
+package/.vers_b160
+package/.xdc-B06
+package/xconfig_labra.java
+package/xconfig_labra.class
+package/package_xconfig_labra.c
+package/package.defs.h
+package/xconfig_labra.ccs
