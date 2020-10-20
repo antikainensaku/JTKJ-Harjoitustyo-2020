@@ -210,15 +210,41 @@ main.obj: C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/tidrivers_cc13xx_cc26xx
 main.obj: C:/ti/ccsv6/tools/compiler/ti-cgt-arm_15.12.1.LTS/include/assert.h
 main.obj: C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/tidrivers_cc13xx_cc26xx_2_20_00_08/packages/ti/drivers/UART.h
 main.obj: C:/ti/ccsv6/tools/compiler/ti-cgt-arm_15.12.1.LTS/include/stddef.h
+main.obj: C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/tidrivers_cc13xx_cc26xx_2_20_00_08/packages/ti/drivers/i2c/I2CCC26XX.h
+main.obj: C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/bios_6_46_00_23/packages/ti/sysbios/family/arm/m3/Hwi.h
+main.obj: C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/bios_6_46_00_23/packages/ti/sysbios/knl/Swi.h
+main.obj: C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/bios_6_46_00_23/packages/ti/sysbios/knl/Semaphore.h
+main.obj: C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/Types.h
+main.obj: C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/IInstance.h
+main.obj: C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/Diags.h
+main.obj: C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/Log.h
+main.obj: C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/Assert.h
+main.obj: C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/bios_6_46_00_23/packages/ti/sysbios/knl/Queue.h
+main.obj: C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/bios_6_46_00_23/packages/ti/sysbios/knl/Task.h
+main.obj: C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/bios_6_46_00_23/packages/ti/sysbios/knl/Clock.h
+main.obj: C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/IModule.h
+main.obj: C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/bios_6_46_00_23/packages/ti/sysbios/knl/Event.h
+main.obj: C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/Types.h
+main.obj: C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/IInstance.h
+main.obj: C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/bios_6_46_00_23/packages/ti/sysbios/knl/Event__prologue.h
+main.obj: C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/Assert.h
+main.obj: C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/Diags.h
+main.obj: C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/Log.h
+main.obj: C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/bios_6_46_00_23/packages/ti/sysbios/knl/Queue.h
+main.obj: C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/bios_6_46_00_23/packages/ti/sysbios/knl/Clock.h
+main.obj: C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/bios_6_46_00_23/packages/ti/sysbios/knl/Task.h
+main.obj: C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/IModule.h
+main.obj: C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/bios_6_46_00_23/packages/ti/sysbios/knl/Event__epilogue.h
 main.obj: ../Board.h
 main.obj: ../CC2650STK.h
 main.obj: ../wireless/comm_lib.h
-main.obj: C:/Users/lassi/Desktop/tkj/JTKJ_labra_2020/JTKJ_labra_2020/wireless/CWC_CC2650_154Drv.h
+main.obj: C:/Users/lassi/workspace_v613/JTKJ_labra/wireless/CWC_CC2650_154Drv.h
 main.obj: C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/cc26xxware_2_24_02_17202/driverlib/rf_data_entry.h
 main.obj: C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/cc26xxware_2_24_02_17202/driverlib/rf_mailbox.h
 main.obj: C:/ti/ccsv6/tools/compiler/ti-cgt-arm_15.12.1.LTS/include/string.h
-main.obj: C:/Users/lassi/Desktop/tkj/JTKJ_labra_2020/JTKJ_labra_2020/wireless/address.h
+main.obj: C:/Users/lassi/workspace_v613/JTKJ_labra/wireless/address.h
 main.obj: ../sensors/opt3001.h
+main.obj: ../sensors/mpu9250.h
 
 ../main.c: 
 C:/ti/ccsv6/tools/compiler/ti-cgt-arm_15.12.1.LTS/include/stdio.h: 
@@ -430,12 +456,38 @@ C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/tidrivers_cc13xx_cc26xx_2_20_00_0
 C:/ti/ccsv6/tools/compiler/ti-cgt-arm_15.12.1.LTS/include/assert.h: 
 C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/tidrivers_cc13xx_cc26xx_2_20_00_08/packages/ti/drivers/UART.h: 
 C:/ti/ccsv6/tools/compiler/ti-cgt-arm_15.12.1.LTS/include/stddef.h: 
+C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/tidrivers_cc13xx_cc26xx_2_20_00_08/packages/ti/drivers/i2c/I2CCC26XX.h: 
+C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/bios_6_46_00_23/packages/ti/sysbios/family/arm/m3/Hwi.h: 
+C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/bios_6_46_00_23/packages/ti/sysbios/knl/Swi.h: 
+C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/bios_6_46_00_23/packages/ti/sysbios/knl/Semaphore.h: 
+C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/Types.h: 
+C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/IInstance.h: 
+C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/Diags.h: 
+C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/Log.h: 
+C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/Assert.h: 
+C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/bios_6_46_00_23/packages/ti/sysbios/knl/Queue.h: 
+C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/bios_6_46_00_23/packages/ti/sysbios/knl/Task.h: 
+C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/bios_6_46_00_23/packages/ti/sysbios/knl/Clock.h: 
+C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/IModule.h: 
+C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/bios_6_46_00_23/packages/ti/sysbios/knl/Event.h: 
+C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/Types.h: 
+C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/IInstance.h: 
+C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/bios_6_46_00_23/packages/ti/sysbios/knl/Event__prologue.h: 
+C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/Assert.h: 
+C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/Diags.h: 
+C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/Log.h: 
+C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/bios_6_46_00_23/packages/ti/sysbios/knl/Queue.h: 
+C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/bios_6_46_00_23/packages/ti/sysbios/knl/Clock.h: 
+C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/bios_6_46_00_23/packages/ti/sysbios/knl/Task.h: 
+C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/IModule.h: 
+C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/bios_6_46_00_23/packages/ti/sysbios/knl/Event__epilogue.h: 
 ../Board.h: 
 ../CC2650STK.h: 
 ../wireless/comm_lib.h: 
-C:/Users/lassi/Desktop/tkj/JTKJ_labra_2020/JTKJ_labra_2020/wireless/CWC_CC2650_154Drv.h: 
+C:/Users/lassi/workspace_v613/JTKJ_labra/wireless/CWC_CC2650_154Drv.h: 
 C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/cc26xxware_2_24_02_17202/driverlib/rf_data_entry.h: 
 C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/cc26xxware_2_24_02_17202/driverlib/rf_mailbox.h: 
 C:/ti/ccsv6/tools/compiler/ti-cgt-arm_15.12.1.LTS/include/string.h: 
-C:/Users/lassi/Desktop/tkj/JTKJ_labra_2020/JTKJ_labra_2020/wireless/address.h: 
+C:/Users/lassi/workspace_v613/JTKJ_labra/wireless/address.h: 
 ../sensors/opt3001.h: 
+../sensors/mpu9250.h: 

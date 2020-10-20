@@ -10,6 +10,7 @@
 
 #include <inttypes.h>
 #include <math.h>
+#include <stdio.h>
 
 #include <xdc/runtime/System.h>
 #include <ti/sysbios/knl/Task.h>
@@ -497,10 +498,32 @@ void mpu9250_get_data(I2C_Handle *i2c, float *ax, float *ay, float *az, float *g
 
 	uint8_t rawData[14]; // Register data
 	int16_t data[7]; // Raw data values
+	int i;
+	//char str[64];
 
    	// JTKJ: 1. Luetaan rekisteriarvot talteen taulukkoon (rawData)
    	// JTKJ: 1. Read register values into array rawData
+	/*
+	for (i = 0; i < 14; ++i) {
+			System_printf("%d : %d\n", i, rawData[i]);
+			System_flush();
+		}
+	*/
 	readByte( ACCEL_XOUT_H, 14, rawData);
+
+	/*
+	for (i = 0; i < 14; ++i) {
+			System_printf("%d : %d\n", i, rawData[i]);
+			System_flush();
+		}
+		*/
+
+	for (i = 0; i < 7; ++i) {
+		data[i] = ((uint16_t)rawData[2*i] << 8) | (uint16_t)rawData[2*i+1];
+		System_printf("data[%d] = %d\n", i, data[i]);
+		System_flush();
+	}
+
 
 	// JTKJ: 2. Muunnetaan 8-bittiset rekisterinarvot 16-bittisiksi. Tässä siis 12
 	//          8-bittistä rekisteriarvoa (kiihtyvyyden x,y,z ja gyron x,y,z joista
@@ -524,4 +547,7 @@ void mpu9250_get_data(I2C_Handle *i2c, float *ax, float *ay, float *az, float *g
 	*gx = (float)data[4]*gRes;
 	*gy = (float)data[5]*gRes;
 	*gz = (float)data[6]*gRes;
+
+	//sprintf(str, "ax:%f,ay:%f,az:%f,gx:%f,gy:%f,gz:%f", ax, ay, az, gx, gy, gz);
+	//return str;
 }
