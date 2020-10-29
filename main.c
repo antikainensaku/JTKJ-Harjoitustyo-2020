@@ -202,8 +202,6 @@ Void labTaskFxn(UArg arg0, UArg arg1) {
     	sprintf(str_moves, "Moves : %d", num_moves);
     	Display_print0(displayHandle, 1, 2, str_moves);
     	Display_print0(displayHandle, 3, 2, direction);
-    	Task_sleep(500000 / Clock_tickPeriod);
-
     	/*
     	sprintf(echo_msg,"id:266,light:%lf\n\r", opt3001_get_data(&i2cMPU));   // CSV-format
     	UART_write(uart, echo_msg, strlen(echo_msg));       // writes to UART
