@@ -42,7 +42,7 @@ extern "C" {
 //       Enable this constant to use Display
 //       Disable to use UART
 
-//#define BOARD_DISPLAY_EXCLUDE_UART
+#define BOARD_DISPLAY_EXCLUDE_UART
 
 #include <ti/drivers/Power.h>
 

@@ -66,8 +66,8 @@ void buttonFxn(PIN_Handle handle, PIN_Id pinId) {
 /* Task Functions */
 Void labTaskFxn(UArg arg0, UArg arg1) {
 
-    UART_Handle 	uart;
-    UART_Params 	uartParams;
+    char direction[10], str_moves[10];
+    int num_moves = 0;
 
     //char echo_msg[80];
 
@@ -134,6 +134,9 @@ Void labTaskFxn(UArg arg0, UArg arg1) {
 	}
 
     // setup UART (check for right COM port)
+	/*
+	UART_Handle 	uart;
+    UART_Params 	uartParams;
 
 	UART_Params_init(&uartParams);
 	uartParams.writeDataMode = UART_DATA_TEXT;
@@ -150,6 +153,7 @@ Void labTaskFxn(UArg arg0, UArg arg1) {
 	if (uart == NULL) {
 		System_abort("Error opening the UART");
 	}
+	*/
 
 
     while (1) {
@@ -161,20 +165,44 @@ Void labTaskFxn(UArg arg0, UArg arg1) {
     	System_flush();
 
     	Display_print0(displayHandle, 1, 1, strlux);        // prints lux value to display
+    	Display_clear(displayHandle);                 // clears the display
 		*/
 
     	i2cMPU = I2C_open(Board_I2C, &i2cMPUParams);
     	if (i2cMPU == NULL) {
     		System_abort("Error Initializing I2CMPU\n");
     	}
-    	System_printf("Haloo2\n");
-    	System_flush();
 
     	mpu9250_get_data(&i2cMPU, &ax, &ay, &az, &gx, &gy, &gz);
     	System_printf("ax:%f, ay:%f, az:%f, gx:%f, gy:%f, gz:%f\n", ax, ay, az, gx, gy, gz);
     	System_flush();
 
     	I2C_close(i2cMPU);
+
+    	if (ay < -0.5) {
+    		sprintf(direction, "UP");
+    		++num_moves;
+    	}
+    	else if (ay > 0.5) {
+    		sprintf(direction, "DOWN");
+    		++num_moves;
+    	}
+    	else if (ax < -0.5) {
+    		sprintf(direction, "LEFT");
+    		++num_moves;
+    	}
+    	else if (ax > 0.5) {
+    		sprintf(direction, "RIGHT");
+    		++num_moves;
+    	}
+    	else {
+    		sprintf(direction, "STILL");
+    	}
+
+    	sprintf(str_moves, "Moves : %d", num_moves);
+    	Display_print0(displayHandle, 1, 2, str_moves);
+    	Display_print0(displayHandle, 3, 2, direction);
+    	Task_sleep(500000 / Clock_tickPeriod);
 
     	/*
     	sprintf(echo_msg,"id:266,light:%lf\n\r", opt3001_get_data(&i2cMPU));   // CSV-format

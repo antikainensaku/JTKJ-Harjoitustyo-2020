@@ -512,17 +512,20 @@ void mpu9250_get_data(I2C_Handle *i2c, float *ax, float *ay, float *az, float *g
 	readByte( ACCEL_XOUT_H, 14, rawData);
 
 	/*
+
 	for (i = 0; i < 14; ++i) {
 			System_printf("%d : %d\n", i, rawData[i]);
 			System_flush();
 		}
 		*/
 
+
 	for (i = 0; i < 7; ++i) {
 		data[i] = ((uint16_t)rawData[2*i] << 8) | (uint16_t)rawData[2*i+1];
-		System_printf("data[%d] = %d\n", i, data[i]);
-		System_flush();
+		//System_printf("data[%d] = %d\n", i, data[i]);
+		//System_flush();
 	}
+
 
 
 	// JTKJ: 2. Muunnetaan 8-bittiset rekisterinarvot 16-bittisiksi. Tässä siis 12
@@ -547,7 +550,4 @@ void mpu9250_get_data(I2C_Handle *i2c, float *ax, float *ay, float *az, float *g
 	*gx = (float)data[4]*gRes;
 	*gy = (float)data[5]*gRes;
 	*gz = (float)data[6]*gRes;
-
-	//sprintf(str, "ax:%f,ay:%f,az:%f,gx:%f,gy:%f,gz:%f", ax, ay, az, gx, gy, gz);
-	//return str;
 }
