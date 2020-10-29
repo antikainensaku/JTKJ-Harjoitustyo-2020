@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <time.h>
 
 /* XDCtools files */
 #include <xdc/std.h>
@@ -52,7 +53,7 @@ static PIN_Handle ledHandle;
 static PIN_State ledState;
 
 PIN_Config buttonConfig[] = {
-   Board_BUTTON0  | PIN_INPUT_EN | PIN_PULLUP | PIN_IRQ_NEGEDGE, PIN_TERMINATE
+	Board_BUTTON0  | PIN_INPUT_EN | PIN_PULLUP | PIN_IRQ_NEGEDGE, PIN_TERMINATE
 };
 
 PIN_Config ledConfig[] = {
@@ -62,6 +63,20 @@ PIN_Config ledConfig[] = {
 void buttonFxn(PIN_Handle handle, PIN_Id pinId) {
    PIN_setOutputValue( ledHandle, Board_LED1, !PIN_getOutputValue( Board_LED1 ) );  // Change led state with negation
 }
+
+
+
+// Global variables
+int state_data = 0;
+
+int state_mpu = 0;
+unsigned long t_mpu = 0;
+unsigned long t_0_mpu = 0;
+int debounce_time = 10000/Clock_tickPeriod;
+
+char direction[10], str_moves[10];
+int num_moves = 0;
+
 
 /* Task Functions */
 Void labTaskFxn(UArg arg0, UArg arg1) {
@@ -87,8 +102,6 @@ Void labTaskFxn(UArg arg0, UArg arg1) {
 
     I2C_close(i2c); // close 12C for other sensor
     */
-
-    float ax, ay, az, gx, gy, gz;
 
     I2C_Handle i2cMPU; // INTERFACE FOR MPU9250 SENSOR
 	I2C_Params i2cMPUParams;
@@ -157,7 +170,7 @@ Void labTaskFxn(UArg arg0, UArg arg1) {
 
 
     while (1) {
-    	/*
+    	/*								 **Light sensor value printed to display-code** 
     	char strlux[40];
 
     	sprintf(strlux, "%lf lux", opt3001_get_data(&i2c));     // gets lux value from opt3001_get_data
@@ -168,49 +181,126 @@ Void labTaskFxn(UArg arg0, UArg arg1) {
     	Display_clear(displayHandle);                 // clears the display
 		*/
 
-    	i2cMPU = I2C_open(Board_I2C, &i2cMPUParams);
-    	if (i2cMPU == NULL) {
-    		System_abort("Error Initializing I2CMPU\n");
-    	}
+		SM_get_data();
+		SM_mpu();
 
-    	mpu9250_get_data(&i2cMPU, &ax, &ay, &az, &gx, &gy, &gz);
-    	System_printf("ax:%f, ay:%f, az:%f, gx:%f, gy:%f, gz:%f\n", ax, ay, az, gx, gy, gz);
-    	System_flush();
-
-    	I2C_close(i2cMPU);
-
-    	if (ay < -0.5) {
-    		sprintf(direction, "UP");
-    		++num_moves;
-    	}
-    	else if (ay > 0.5) {
-    		sprintf(direction, "DOWN");
-    		++num_moves;
-    	}
-    	else if (ax < -0.5) {
-    		sprintf(direction, "LEFT");
-    		++num_moves;
-    	}
-    	else if (ax > 0.5) {
-    		sprintf(direction, "RIGHT");
-    		++num_moves;
-    	}
-    	else {
-    		sprintf(direction, "STILL");
-    	}
+		if (state_mpu = 4) {sprintf(direction, "UP");}
+		if (state_mpu = 5) {sprintf(direction, "DOWN");}
+		if (state_mpu = 6) {sprintf(direction, "LEFT");}
+		if (state_mpu = 7) {sprintf(direction, "RIGHT");}
 
     	sprintf(str_moves, "Moves : %d", num_moves);
     	Display_print0(displayHandle, 1, 2, str_moves);
     	Display_print0(displayHandle, 3, 2, direction);
+
     	/*
     	sprintf(echo_msg,"id:266,light:%lf\n\r", opt3001_get_data(&i2cMPU));   // CSV-format
     	UART_write(uart, echo_msg, strlen(echo_msg));       // writes to UART
 		*/
-
-    	Task_sleep(1000000 / Clock_tickPeriod);     // Once per second
     }
 	//PIN_setOutputValue(hMpuPin,Board_MPU_POWER, Board_MPU_POWER_OFF);
 }
+
+void SM_get_data() {
+    switch (state_data) {
+        case 0:     // reset
+			float ax, ay, az, gx, gy, gz;
+            state_data = 1;
+        break;
+
+        case 1:     // start 
+            i2cMPU = I2C_open(Board_I2C, &i2cMPUParams);
+            if (i2cMPU == NULL) {
+                System_abort("Error Initializing I2CMPU\n");
+            }
+            else {
+                state_data = 2;
+            }
+        break;
+
+        case 2:     // get data
+            mpu9250_get_data(&i2cMPU, &ax, &ay, &az, &gx, &gy, &gz);
+            I2C_close(i2cMPU);          
+            state_data = 1;
+        break;
+}
+
+
+void SM_mpu() {
+    switch (state_mpu) {
+        case 0:     // reset
+            state_mpu = 1;
+        break;
+
+        case 1:     // start 
+            t_0_mpu = clock();
+            state_mpu = 3;
+        break;
+
+        case 2:     // get data
+            
+        break;
+
+        case 3:     // check direction
+            if (ay < -0.5 && ax > -0.5 && ax < 0.5) {
+                t_mpu = clock();
+                if (ay > -0.5) {state_mpu = 0;}
+                else if (t_mpu - t_0_mpu > debounce_time) {
+                    state_mpu = 4;
+                }
+            }
+            else if (ay > 0.5 && ax > -0.5 && ax < 0.5) {
+                t_mpu = clock();
+                if (ay < 0.5) {state_mpu = 0;}
+                else if (t_mpu - t_0_mpu > debounce_time) {
+                    state_mpu = 5;
+                }
+            }
+            else if (ax < -0.5 && ay > -0.5 && ay < 0.5) {
+                t_mpu = clock();
+                if (ax > -0.5) {state_mpu = 0;}
+                else if (t_mpu - t_0_mpu > debounce_time) {
+                    state_mpu = 6;
+                }
+            }
+            else if (ax > 0.5 && ay > -0.5 && ay < 0.5) {
+                t_mpu = clock();
+                if (ax < 0.5) {state_mpu = 0;}
+                else if (t_mpu - t_0_mpu > debounce_time) {
+                    state_mpu = 7;
+                }
+            }
+            else {
+                state_mpu = 0;
+            }
+        break;
+
+        case 4:         // UP
+            if (ay > -0.5) {state_mpu =8}   
+        break;
+
+        case 5:         // DOWN
+            if (ay < 0.5) {state_mpu = 8;}
+        break;
+
+        case 6:         // LEFT
+            if (ax > -0.5) {state_mpu = 8;}
+        break;
+
+        case 7:         // RIGHT
+            if (ax < 0.5) {state_mpu = 8;}
+        break;
+
+        case 8:             // back to normal
+            ++num_moves;
+            state_mpu = 0;
+        break;
+    }
+}
+
+
+
+
 
 /* Communication Task */
 /*
