@@ -72,17 +72,23 @@ int state_data = 0;
 int state_mpu = 0;
 unsigned long t_mpu = 0;
 unsigned long t_0_mpu = 0;
-int debounce_time = 10000/Clock_tickPeriod;
+unsigned long debounce_time = 400;
+float ax, ay, az, gx, gy, gz;
 
-char direction[10], str_moves[10];
+char direction[10] = "START", str_moves[10] = "0";
 int num_moves = 0;
+
+// Other global stuff
+I2C_Handle i2cMPU; // INTERFACE FOR MPU9250 SENSOR
+I2C_Params i2cMPUParams;
+void SM_get_data();
+void SM_mpu();
 
 
 /* Task Functions */
 Void labTaskFxn(UArg arg0, UArg arg1) {
 
     char direction[10], str_moves[10];
-    int num_moves = 0;
 
     //char echo_msg[80];
 
@@ -103,8 +109,9 @@ Void labTaskFxn(UArg arg0, UArg arg1) {
     I2C_close(i2c); // close 12C for other sensor
     */
 
+    /*
     I2C_Handle i2cMPU; // INTERFACE FOR MPU9250 SENSOR
-	I2C_Params i2cMPUParams;
+	I2C_Params i2cMPUParams; */
 	I2C_Params_init(&i2cMPUParams);
 	i2cMPUParams.bitRate = I2C_400kHz;
 	i2cMPUParams.custom = (uintptr_t)&i2cMPUCfg;
@@ -184,10 +191,10 @@ Void labTaskFxn(UArg arg0, UArg arg1) {
 		SM_get_data();
 		SM_mpu();
 
-		if (state_mpu = 4) {sprintf(direction, "UP");}
-		if (state_mpu = 5) {sprintf(direction, "DOWN");}
-		if (state_mpu = 6) {sprintf(direction, "LEFT");}
-		if (state_mpu = 7) {sprintf(direction, "RIGHT");}
+		if (state_mpu == 4) {sprintf(direction, "UP");}
+		if (state_mpu == 5) {sprintf(direction, "DOWN");}
+		if (state_mpu == 6) {sprintf(direction, "LEFT");}
+		if (state_mpu == 7) {sprintf(direction, "RIGHT");}
 
     	sprintf(str_moves, "Moves : %d", num_moves);
     	Display_print0(displayHandle, 1, 2, str_moves);
@@ -204,11 +211,10 @@ Void labTaskFxn(UArg arg0, UArg arg1) {
 void SM_get_data() {
     switch (state_data) {
         case 0:     // reset
-			float ax, ay, az, gx, gy, gz;
             state_data = 1;
         break;
 
-        case 1:     // start 
+        case 1:     // start
             i2cMPU = I2C_open(Board_I2C, &i2cMPUParams);
             if (i2cMPU == NULL) {
                 System_abort("Error Initializing I2CMPU\n");
@@ -223,6 +229,7 @@ void SM_get_data() {
             I2C_close(i2cMPU);          
             state_data = 1;
         break;
+    }
 }
 
 
@@ -233,7 +240,7 @@ void SM_mpu() {
         break;
 
         case 1:     // start 
-            t_0_mpu = clock();
+            t_0_mpu = Clock_getTicks()/10;
             state_mpu = 3;
         break;
 
@@ -243,30 +250,54 @@ void SM_mpu() {
 
         case 3:     // check direction
             if (ay < -0.5 && ax > -0.5 && ax < 0.5) {
-                t_mpu = clock();
-                if (ay > -0.5) {state_mpu = 0;}
+                t_mpu = Clock_getTicks()/10;
+                System_printf("Ticks: %ld ja ay:%f\n", (t_mpu - t_0_mpu), ay);
+                System_flush();
+                if (ay > -0.5) {state_mpu = 0;
+                System_printf("Ollaan ifissa\n");
+                                System_flush();}
                 else if (t_mpu - t_0_mpu > debounce_time) {
+                	System_printf("elifTicks: %ld ja ay:%f\n", (t_mpu - t_0_mpu), ay);
+                	                System_flush();
                     state_mpu = 4;
                 }
             }
             else if (ay > 0.5 && ax > -0.5 && ax < 0.5) {
-                t_mpu = clock();
-                if (ay < 0.5) {state_mpu = 0;}
+                t_mpu = Clock_getTicks()/10;
+                System_printf("Ticks: %ld\n", (t_mpu - t_0_mpu));
+                System_flush();
+                if (ay < 0.5) {state_mpu = 0;
+                System_printf("Ollaan ifissa\n");
+                                                System_flush();}
                 else if (t_mpu - t_0_mpu > debounce_time) {
+                	System_printf("elifTicks: %ld\n", (Clock_getTicks()/10 - t_0_mpu));
+                	                System_flush();
                     state_mpu = 5;
                 }
             }
             else if (ax < -0.5 && ay > -0.5 && ay < 0.5) {
-                t_mpu = clock();
-                if (ax > -0.5) {state_mpu = 0;}
+                t_mpu = Clock_getTicks()/10;
+                System_printf("Ticks: %ld\n", (t_mpu - t_0_mpu));
+                System_flush();
+                if (ax > -0.5) {state_mpu = 0;
+                System_printf("Ollaan ifissa\n");
+                                                System_flush();}
                 else if (t_mpu - t_0_mpu > debounce_time) {
+                	System_printf("elifTicks: %ld\n", (Clock_getTicks()/10 - t_0_mpu));
+                	                System_flush();
                     state_mpu = 6;
                 }
             }
             else if (ax > 0.5 && ay > -0.5 && ay < 0.5) {
-                t_mpu = clock();
-                if (ax < 0.5) {state_mpu = 0;}
+                t_mpu = Clock_getTicks()/10;
+                System_printf("Ticks: %ld\n", (t_mpu - t_0_mpu));
+                System_flush();
+                if (ax < 0.5) {state_mpu = 0;
+                System_printf("Ollaan ifissa\n");
+                                                System_flush();}
                 else if (t_mpu - t_0_mpu > debounce_time) {
+                	System_printf("elifTicks: %ld\n", (Clock_getTicks()/10 - t_0_mpu));
+                	                System_flush();
                     state_mpu = 7;
                 }
             }
@@ -276,7 +307,7 @@ void SM_mpu() {
         break;
 
         case 4:         // UP
-            if (ay > -0.5) {state_mpu =8}   
+            if (ay > -0.5) {state_mpu = 8;}
         break;
 
         case 5:         // DOWN

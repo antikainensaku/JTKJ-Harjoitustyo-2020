@@ -11,7 +11,7 @@ var makeAssembly = false;
 var Executable = xdc.module('xdc.bld.Executable');
 
 var exeOpts = new Executable.Attrs({
-        cfgScript: 'C:/Users/lassi/Desktop/tkj/JTKJ_labra_2020/JTKJ_labra_2020/labra.cfg',
+        cfgScript: 'C:/Users/lassi/workspace_v613/JTKJ_labra/labra.cfg',
         profile: 'release',
         cfgHome: 'xconfig_labra',
 });
@@ -40,8 +40,8 @@ else {
 }
 
 var thisObj = {
-    cfg:        'C:/Users/lassi/Desktop/tkj/JTKJ_labra_2020/JTKJ_labra_2020/labra.cfg',
-    outputPath: 'C:/Users/lassi/Desktop/tkj/JTKJ_labra_2020/JTKJ_labra_2020/.config/xconfig_labra',
+    cfg:        'C:/Users/lassi/workspace_v613/JTKJ_labra/labra.cfg',
+    outputPath: 'C:/Users/lassi/workspace_v613/JTKJ_labra/.config/xconfig_labra',
     exeName:    'labra' + suffix,
     exeIntName: 'labra' + suffix.replace('.', '_'),
     targ:       targ,
