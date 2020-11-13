@@ -28,7 +28,7 @@
 /* Task */
 #define STACKSIZE 2048
 Char labTaskStack[STACKSIZE];
-// Char commTaskStack[STACKSIZE];
+Char commTaskStack[STACKSIZE];
 
 /* Display */
 Display_Handle displayHandle;
@@ -60,11 +60,6 @@ PIN_Config ledConfig[] = {
    Board_LED1 | PIN_GPIO_OUTPUT_EN | PIN_GPIO_LOW | PIN_PUSHPULL | PIN_DRVSTR_MAX, PIN_TERMINATE
 };
 
-void buttonFxn(PIN_Handle handle, PIN_Id pinId) {
-   PIN_setOutputValue( ledHandle, Board_LED1, !PIN_getOutputValue( Board_LED1 ) );  // Change led state with negation
-}
-
-
 
 // Global variables
 int state_data = 0;
@@ -72,10 +67,10 @@ int state_data = 0;
 int state_mpu = 0;
 unsigned long t_mpu = 0;
 unsigned long t_0_mpu = 0;
-unsigned long debounce_time = 3000;
+unsigned long debounce_time = 16000;
 float ax, ay, az, gx, gy, gz;
 
-char direction[10] = "START", str_moves[10] = "0";
+char direction[10] = "", str_moves[10] = "0";
 int num_moves = 0;
 
 // Other global stuff
@@ -84,11 +79,10 @@ I2C_Params i2cMPUParams;
 void SM_get_data();
 void SM_mpu();
 
-
 /* Task Functions */
 Void labTaskFxn(UArg arg0, UArg arg1) {
 
-    char direction[10], str_moves[10];
+    //char direction[10], str_moves[10];
 
     //char echo_msg[80];
 
@@ -144,7 +138,9 @@ Void labTaskFxn(UArg arg0, UArg arg1) {
 	params.lineClearMode = DISPLAY_CLEAR_BOTH;
 
 	Display_Handle displayHandle = Display_open(Display_Type_LCD, &params);
+    //sprintf(direction, "START");
 
+    /*
 	if (displayHandle) {
 	      Display_print0(displayHandle, 5, 3, "Shall we play");
 	      Display_print0(displayHandle, 6, 5, "..a game?");
@@ -152,6 +148,7 @@ Void labTaskFxn(UArg arg0, UArg arg1) {
 	      Task_sleep(3 * 1000000/Clock_tickPeriod);     // shows it for 3 seconds
 	      Display_clear(displayHandle);                 // clears the display
 	}
+    */
 
     // setup UART (check for right COM port)
 	/*
@@ -358,15 +355,26 @@ void SM_mpu() {
 }
 
 
+void buttonFxn(PIN_Handle handle, PIN_Id pinId) {
+    PIN_setOutputValue( ledHandle, Board_LED1, !PIN_getOutputValue( Board_LED1 ) );  // Change led state with negation
 
+    char payload[16];
+    sprintf(payload, "event:%s", direction);
+    //Send6LoWPAN(0x1234, payload, strlen(payload));        //Send message
+    System_printf("Direction sent: %s\n", payload);
+    System_flush();
+    StartReceive6LoWPAN();//Put radio back to reception mode
+}
 
 
 /* Communication Task */
-/*
+
 Void commTaskFxn(UArg arg0, UArg arg1) {
 
-    // Radio to receive mode
-	int32_t result = StartReceive6LoWPAN();
+    char payload[16];     // Buffer
+    uint16_t senderAddr;
+
+	int32_t result = StartReceive6LoWPAN();     // Radio to receive mode
 	if(result != true) {
 		System_abort("Wireless receive mode failed");
 	}
@@ -375,23 +383,30 @@ Void commTaskFxn(UArg arg0, UArg arg1) {
 
         // If true, we have a message
     	if (GetRXFlag() == true) {
-
-    		// Handle the received message..
+            memset(payload,0,16);                        // Empty the buffer
+            Receive6LoWPAN(&senderAddr, payload, 16);    // Read message into the buffer
+            System_printf(payload);                        // Print received message to console screen
+            System_flush();
         }
-
-    	// Absolutely NO Task_sleep in this task!!
+        /*
+        if (payload == "266,WIN") {
+            //ggez
+        }
+        if (payload == "266,LOST GAME") {
+            //ggs
+        }
+        */
     }
 }
-*/
+
 
 Int main(void) {
     // Task variables
 	Task_Handle labTask;
 	Task_Params labTaskParams;
-	/*
 	Task_Handle commTask;
 	Task_Params commTaskParams;
-	*/
+
 
     Board_initGeneral();    // initialize board
 
@@ -431,7 +446,6 @@ Int main(void) {
     }
 
     /* Communication Task */
-	/*
     Init6LoWPAN(); // This function call before use!
 
     Task_Params_init(&commTaskParams);
@@ -443,7 +457,6 @@ Int main(void) {
     if (commTask == NULL) {
     	System_abort("Task create failed!");
     }
-	*/
 
     /* Sanity check */
     System_printf("Hello world!\n");
