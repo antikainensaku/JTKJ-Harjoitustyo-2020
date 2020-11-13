@@ -1,6 +1,6 @@
 #
 # This file was generated based on the configuration script:
-#     C:\Users\lassi\workspace_v613\JTKJ_labra\labra.cfg
+#     D:\ti\JTKJ-Harjoitustyo2020\labra.cfg
 #
 # This makefile may be included in other makefiles that need to build
 # the libraries containing the compiled source files generated as
@@ -14,7 +14,7 @@
 #
 # The absolute path to the generated source directory (at the time the
 # sources were generated) is:
-#    C:\Users\lassi\workspace_v613\JTKJ_labra\src
+#    D:\ti\JTKJ-Harjoitustyo2020\src
 #
 GEN_SRC_DIR ?= ../src
 

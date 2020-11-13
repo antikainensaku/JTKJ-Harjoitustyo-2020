@@ -72,7 +72,7 @@ int state_data = 0;
 int state_mpu = 0;
 unsigned long t_mpu = 0;
 unsigned long t_0_mpu = 0;
-unsigned long debounce_time = 400;
+unsigned long debounce_time = 3000;
 float ax, ay, az, gx, gy, gz;
 
 char direction[10] = "START", str_moves[10] = "0";
@@ -219,14 +219,14 @@ void SM_get_data() {
             if (i2cMPU == NULL) {
                 System_abort("Error Initializing I2CMPU\n");
             }
-            else {
-                state_data = 2;
-            }
+            else {state_data = 2;}
         break;
 
         case 2:     // get data
             mpu9250_get_data(&i2cMPU, &ax, &ay, &az, &gx, &gy, &gz);
-            I2C_close(i2cMPU);          
+            I2C_close(i2cMPU);
+            //System_printf("Took data\n");
+            //System_flush();
             state_data = 1;
         break;
     }
@@ -240,7 +240,7 @@ void SM_mpu() {
         break;
 
         case 1:     // start 
-            t_0_mpu = Clock_getTicks()/10;
+            t_0_mpu = Clock_getTicks();
             state_mpu = 3;
         break;
 
@@ -250,56 +250,28 @@ void SM_mpu() {
 
         case 3:     // check direction
             if (ay < -0.5 && ax > -0.5 && ax < 0.5) {
-                t_mpu = Clock_getTicks()/10;
-                System_printf("Ticks: %ld ja ay:%f\n", (t_mpu - t_0_mpu), ay);
-                System_flush();
-                if (ay > -0.5) {state_mpu = 0;
-                System_printf("Ollaan ifissa\n");
-                                System_flush();}
-                else if (t_mpu - t_0_mpu > debounce_time) {
-                	System_printf("elifTicks: %ld ja ay:%f\n", (t_mpu - t_0_mpu), ay);
-                	                System_flush();
-                    state_mpu = 4;
-                }
+                t_mpu = Clock_getTicks();
+                //System_printf("Ticks: %lu\n", (t_mpu - t_0_mpu));
+                //System_flush();
+                state_mpu = 9;
             }
             else if (ay > 0.5 && ax > -0.5 && ax < 0.5) {
-                t_mpu = Clock_getTicks()/10;
-                System_printf("Ticks: %ld\n", (t_mpu - t_0_mpu));
-                System_flush();
-                if (ay < 0.5) {state_mpu = 0;
-                System_printf("Ollaan ifissa\n");
-                                                System_flush();}
-                else if (t_mpu - t_0_mpu > debounce_time) {
-                	System_printf("elifTicks: %ld\n", (Clock_getTicks()/10 - t_0_mpu));
-                	                System_flush();
-                    state_mpu = 5;
-                }
+                t_mpu = Clock_getTicks();
+                //System_printf("Ticks: %lu\n", (t_mpu - t_0_mpu));
+                //System_flush();
+                state_mpu = 10;
             }
             else if (ax < -0.5 && ay > -0.5 && ay < 0.5) {
-                t_mpu = Clock_getTicks()/10;
-                System_printf("Ticks: %ld\n", (t_mpu - t_0_mpu));
-                System_flush();
-                if (ax > -0.5) {state_mpu = 0;
-                System_printf("Ollaan ifissa\n");
-                                                System_flush();}
-                else if (t_mpu - t_0_mpu > debounce_time) {
-                	System_printf("elifTicks: %ld\n", (Clock_getTicks()/10 - t_0_mpu));
-                	                System_flush();
-                    state_mpu = 6;
-                }
+                t_mpu = Clock_getTicks();
+                //System_printf("Ticks: %lu\n", (t_mpu - t_0_mpu));
+                //System_flush();
+                state_mpu = 11;
             }
             else if (ax > 0.5 && ay > -0.5 && ay < 0.5) {
                 t_mpu = Clock_getTicks()/10;
-                System_printf("Ticks: %ld\n", (t_mpu - t_0_mpu));
-                System_flush();
-                if (ax < 0.5) {state_mpu = 0;
-                System_printf("Ollaan ifissa\n");
-                                                System_flush();}
-                else if (t_mpu - t_0_mpu > debounce_time) {
-                	System_printf("elifTicks: %ld\n", (Clock_getTicks()/10 - t_0_mpu));
-                	                System_flush();
-                    state_mpu = 7;
-                }
+                //System_printf("Ticks: %lu\n", (t_mpu - t_0_mpu));
+                //System_flush();
+                state_mpu = 12;
             }
             else {
                 state_mpu = 0;
@@ -325,6 +297,62 @@ void SM_mpu() {
         case 8:             // back to normal
             ++num_moves;
             state_mpu = 0;
+        break;
+
+        case 9:
+            t_mpu = Clock_getTicks();
+            if (ay > -0.5) {
+                System_printf("Error prevention\n");
+                System_flush();
+                state_mpu = 0;
+            }
+            else if (t_mpu - t_0_mpu > debounce_time) {
+                //System_printf("Other Ticks: %lu \n", (t_mpu - t_0_mpu));
+                //System_flush();
+                state_mpu = 4;
+            }
+        break;
+
+        case 10:
+            t_mpu = Clock_getTicks();
+            if (ay < 0.5) {
+                System_printf("Error prevention\n");
+                System_flush();
+                state_mpu = 0;
+            }
+            else if (t_mpu - t_0_mpu > debounce_time) {
+                //System_printf("Other Ticks: %lu \n", (t_mpu - t_0_mpu));
+                //System_flush();
+                state_mpu = 5;
+            }
+        break;
+
+        case 11:
+            t_mpu = Clock_getTicks();
+            if (ax > -0.5) {
+                System_printf("Error prevention\n");
+                System_flush();
+                state_mpu = 0;
+            }
+            else if (t_mpu - t_0_mpu > debounce_time) {
+                //System_printf("Other Ticks: %lu \n", (t_mpu - t_0_mpu));
+                //System_flush();
+                state_mpu = 6;
+            }
+        break;
+
+        case 12:
+            t_mpu = Clock_getTicks();
+            if (ax < 0.5) {
+                System_printf("Error prevention\n");
+                System_flush();
+                state_mpu = 0;
+            }
+            else if (t_mpu - t_0_mpu > debounce_time) {
+                //System_printf("Other Ticks: %lu \n", (t_mpu - t_0_mpu));
+                //System_flush();
+                state_mpu = 7;
+            }
         break;
     }
 }
