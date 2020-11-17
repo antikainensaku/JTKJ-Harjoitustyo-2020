@@ -49,11 +49,17 @@ static const I2CCC26XX_I2CPinCfg i2cMPUCfg = {
 // Pin configuration and variables
 static PIN_Handle buttonHandle;
 static PIN_State buttonState;
+static PIN_Handle PbuttonHandle;
+static PIN_State PbuttonState;
 static PIN_Handle ledHandle;
 static PIN_State ledState;
 
 PIN_Config buttonConfig[] = {
 	Board_BUTTON0  | PIN_INPUT_EN | PIN_PULLUP | PIN_IRQ_NEGEDGE, PIN_TERMINATE
+};
+
+PIN_Config PbuttonConfig[] = {
+	Board_BUTTON1  | PIN_INPUT_EN | PIN_PULLUP | PIN_IRQ_NEGEDGE, PIN_TERMINATE
 };
 
 PIN_Config ledConfig[] = {
@@ -73,6 +79,10 @@ float ax, ay, az, gx, gy, gz;
 char direction[10] = "", str_moves[10] = "0";
 int num_moves = 0;
 
+int state_buttonp = 0;
+unsigned long t_timer = 0;
+unsigned long t_0_timer = 0;
+
 // Other global stuff
 I2C_Handle i2cMPU; // INTERFACE FOR MPU9250 SENSOR
 I2C_Params i2cMPUParams;
@@ -81,11 +91,6 @@ void SM_mpu();
 
 /* Task Functions */
 Void labTaskFxn(UArg arg0, UArg arg1) {
-
-    //char direction[10], str_moves[10];
-
-    //char echo_msg[80];
-
     // Open the i2c bus for other sensor
     /*
     I2C_Handle      i2c;
@@ -222,8 +227,6 @@ void SM_get_data() {
         case 2:     // get data
             mpu9250_get_data(&i2cMPU, &ax, &ay, &az, &gx, &gy, &gz);
             I2C_close(i2cMPU);
-            //System_printf("Took data\n");
-            //System_flush();
             state_data = 1;
         break;
     }
@@ -248,26 +251,18 @@ void SM_mpu() {
         case 3:     // check direction
             if (ay < -0.5 && ax > -0.5 && ax < 0.5) {
                 t_mpu = Clock_getTicks();
-                //System_printf("Ticks: %lu\n", (t_mpu - t_0_mpu));
-                //System_flush();
                 state_mpu = 9;
             }
             else if (ay > 0.5 && ax > -0.5 && ax < 0.5) {
                 t_mpu = Clock_getTicks();
-                //System_printf("Ticks: %lu\n", (t_mpu - t_0_mpu));
-                //System_flush();
                 state_mpu = 10;
             }
             else if (ax < -0.5 && ay > -0.5 && ay < 0.5) {
                 t_mpu = Clock_getTicks();
-                //System_printf("Ticks: %lu\n", (t_mpu - t_0_mpu));
-                //System_flush();
                 state_mpu = 11;
             }
             else if (ax > 0.5 && ay > -0.5 && ay < 0.5) {
-                t_mpu = Clock_getTicks()/10;
-                //System_printf("Ticks: %lu\n", (t_mpu - t_0_mpu));
-                //System_flush();
+                t_mpu = Clock_getTicks();
                 state_mpu = 12;
             }
             else {
@@ -304,8 +299,6 @@ void SM_mpu() {
                 state_mpu = 0;
             }
             else if (t_mpu - t_0_mpu > debounce_time) {
-                //System_printf("Other Ticks: %lu \n", (t_mpu - t_0_mpu));
-                //System_flush();
                 state_mpu = 4;
             }
         break;
@@ -318,8 +311,6 @@ void SM_mpu() {
                 state_mpu = 0;
             }
             else if (t_mpu - t_0_mpu > debounce_time) {
-                //System_printf("Other Ticks: %lu \n", (t_mpu - t_0_mpu));
-                //System_flush();
                 state_mpu = 5;
             }
         break;
@@ -332,8 +323,6 @@ void SM_mpu() {
                 state_mpu = 0;
             }
             else if (t_mpu - t_0_mpu > debounce_time) {
-                //System_printf("Other Ticks: %lu \n", (t_mpu - t_0_mpu));
-                //System_flush();
                 state_mpu = 6;
             }
         break;
@@ -346,29 +335,45 @@ void SM_mpu() {
                 state_mpu = 0;
             }
             else if (t_mpu - t_0_mpu > debounce_time) {
-                //System_printf("Other Ticks: %lu \n", (t_mpu - t_0_mpu));
-                //System_flush();
                 state_mpu = 7;
             }
         break;
     }
 }
 
+/*
+void SM_Buttonp {
+    switch (state_buttonp) {
+        case 0:     // reset
+            state_buttonp = 1;
+        break;
 
+        case 1:
+            if (buttonFxn) {
+
+            }
+        break;
+    }
+}
+*/
+
+/* Button Task */
 void buttonFxn(PIN_Handle handle, PIN_Id pinId) {
-    PIN_setOutputValue( ledHandle, Board_LED1, !PIN_getOutputValue( Board_LED1 ) );  // Change led state with negation
-
     char payload[16];
     sprintf(payload, "event:%s", direction);
     //Send6LoWPAN(0x1234, payload, strlen(payload));        //Send message
     System_printf("Direction sent: %s\n", payload);
     System_flush();
-    StartReceive6LoWPAN();//Put radio back to reception mode
+    StartReceive6LoWPAN();      //Put radio back to reception mode
 }
 
+/* Power Button Task */
+void PbuttonFxn(PIN_Handle handle, PIN_Id pinId) {
+    System_printf("Power Button Pressed\n");
+    System_flush();
+}
 
 /* Communication Task */
-
 Void commTaskFxn(UArg arg0, UArg arg1) {
 
     char payload[16];     // Buffer
@@ -380,9 +385,7 @@ Void commTaskFxn(UArg arg0, UArg arg1) {
 	}
 
     while (1) {
-
-        // If true, we have a message
-    	if (GetRXFlag() == true) {
+    	if (GetRXFlag() == true) {          // If true, we have a message
             memset(payload,0,16);                        // Empty the buffer
             Receive6LoWPAN(&senderAddr, payload, 16);    // Read message into the buffer
             System_printf(payload);                        // Print received message to console screen
@@ -407,7 +410,6 @@ Int main(void) {
 	Task_Handle commTask;
 	Task_Params commTaskParams;
 
-
     Board_initGeneral();    // initialize board
 
     Board_initI2C();        // initialize i2c
@@ -420,19 +422,27 @@ Int main(void) {
     }
 
     buttonHandle = PIN_open(&buttonState, buttonConfig);    // open and configure the button pin
-      if(!buttonHandle) {
-         System_abort("Error initializing button pins\n");
-      }
+        if(!buttonHandle) {
+        System_abort("Error initializing button pins\n");
+        }
+    
+    PbuttonHandle = PIN_open(&PbuttonState, PbuttonConfig);    // open and configure the power button pin
+        if(!PbuttonHandle) {
+            System_abort("Error initializing Power button pins\n");
+        }
 
-      ledHandle = PIN_open(&ledState, ledConfig);           // open and configure the led pin
-      if(!ledHandle) {
-         System_abort("Error initializing LED pins\n");
-      }
+    ledHandle = PIN_open(&ledState, ledConfig);           // open and configure the led pin
+        if(!ledHandle) {
+            System_abort("Error initializing LED pins\n");
+        }
 
-      if (PIN_registerIntCb(buttonHandle, &buttonFxn) != 0) {       // interrupt handler for the button
+        if (PIN_registerIntCb(buttonHandle, &buttonFxn) != 0) {       // interrupt handler for the button
             System_abort("Error registering button callback function");
-      }
+        }
 
+        if (PIN_registerIntCb(PbuttonHandle, &PbuttonFxn) != 0) {       // interrupt handler for the button
+            System_abort("Error registering button callback function");
+        }
 
     /* Task */
     Task_Params_init(&labTaskParams);

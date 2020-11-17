@@ -164,13 +164,13 @@ wireless/comm_lib.obj: C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/bios_6_46_
 wireless/comm_lib.obj: C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/bios_6_46_00_23/packages/ti/sysbios/interfaces/IHwi.h
 wireless/comm_lib.obj: C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/bios_6_46_00_23/packages/ti/sysbios/family/arm/m3/Hwi__epilogue.h
 wireless/comm_lib.obj: C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/bios_6_46_00_23/packages/ti/sysbios/hal/package/Hwi_HwiProxy.h
-wireless/comm_lib.obj: D:/ti/JTKJ-Harjoitustyo2020/wireless/comm_lib.h
-wireless/comm_lib.obj: D:/ti/JTKJ-Harjoitustyo2020/wireless/CWC_CC2650_154Drv.h
+wireless/comm_lib.obj: C:/ti/JTKJ-Harjoitustyo-2020/wireless/comm_lib.h
+wireless/comm_lib.obj: C:/ti/JTKJ-Harjoitustyo-2020/wireless/CWC_CC2650_154Drv.h
 wireless/comm_lib.obj: C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/cc26xxware_2_24_02_17202/driverlib/rf_data_entry.h
 wireless/comm_lib.obj: C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/cc26xxware_2_24_02_17202/driverlib/rf_mailbox.h
 wireless/comm_lib.obj: C:/ti/ccsv6/tools/compiler/ti-cgt-arm_15.12.1.LTS/include/string.h
-wireless/comm_lib.obj: D:/ti/JTKJ-Harjoitustyo2020/wireless/address.h
-wireless/comm_lib.obj: D:/ti/JTKJ-Harjoitustyo2020/wireless/CWC_IntegrTest.h
+wireless/comm_lib.obj: C:/ti/JTKJ-Harjoitustyo-2020/wireless/address.h
+wireless/comm_lib.obj: C:/ti/JTKJ-Harjoitustyo-2020/wireless/CWC_IntegrTest.h
 
 ../wireless/comm_lib.c: 
 C:/ti/ccsv6/tools/compiler/ti-cgt-arm_15.12.1.LTS/include/stdio.h: 
@@ -336,10 +336,10 @@ C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/bios_6_46_00_23/packages/ti/sysbi
 C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/bios_6_46_00_23/packages/ti/sysbios/interfaces/IHwi.h: 
 C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/bios_6_46_00_23/packages/ti/sysbios/family/arm/m3/Hwi__epilogue.h: 
 C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/bios_6_46_00_23/packages/ti/sysbios/hal/package/Hwi_HwiProxy.h: 
-D:/ti/JTKJ-Harjoitustyo2020/wireless/comm_lib.h: 
-D:/ti/JTKJ-Harjoitustyo2020/wireless/CWC_CC2650_154Drv.h: 
+C:/ti/JTKJ-Harjoitustyo-2020/wireless/comm_lib.h: 
+C:/ti/JTKJ-Harjoitustyo-2020/wireless/CWC_CC2650_154Drv.h: 
 C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/cc26xxware_2_24_02_17202/driverlib/rf_data_entry.h: 
 C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/cc26xxware_2_24_02_17202/driverlib/rf_mailbox.h: 
 C:/ti/ccsv6/tools/compiler/ti-cgt-arm_15.12.1.LTS/include/string.h: 
-D:/ti/JTKJ-Harjoitustyo2020/wireless/address.h: 
-D:/ti/JTKJ-Harjoitustyo2020/wireless/CWC_IntegrTest.h: 
+C:/ti/JTKJ-Harjoitustyo-2020/wireless/address.h: 
+C:/ti/JTKJ-Harjoitustyo-2020/wireless/CWC_IntegrTest.h: 
