@@ -89,10 +89,13 @@ unsigned long t_b1 = 0;
 unsigned long t_0_b1 = 0;
 uint8_t value_b1;
 
+int state_menu = 0;
+
 unsigned long t_debounce = 500;
 unsigned long t_longhold = 150000;
 
 char payload[16];
+int result = -1;
 
 // Other global stuff
 I2C_Handle i2cMPU; // INTERFACE FOR MPU9250 SENSOR
@@ -203,19 +206,53 @@ Void labTaskFxn(UArg arg0, UArg arg1) {
     	Display_clear(displayHandle);                 // clears the display
 		*/
 
-		SM_get_data();
-		SM_mpu();
         SM_b1();
         SM_bp();
+        SM_menu();
 
-		if (state_mpu == 4) {sprintf(direction, "UP");}
-		if (state_mpu == 5) {sprintf(direction, "DOWN");}
-		if (state_mpu == 6) {sprintf(direction, "LEFT");}
-		if (state_mpu == 7) {sprintf(direction, "RIGHT");}
+        if (state_menu == 0)
+        {
+        	Display_clear(displayHandle); 	// empty the screen
+        }
 
-    	sprintf(str_moves, "Moves : %d", num_moves);
-    	Display_print0(displayHandle, 1, 2, str_moves);
-    	Display_print0(displayHandle, 3, 2, direction);
+        else if (state_menu == 1)
+        {
+        	Display_print0(displayHandle, 1, 2, "Start <-");
+        	Display_print0(displayHandle, 2, 2, "Exit"); 	// show menu
+        }
+
+        else if (state_menu == 2)
+        {
+        	Display_print0(displayHandle, 1, 2, "Start");
+        	Display_print0(displayHandle, 2, 2, "Exit  <-"); 	// show menu
+        }
+
+        else if (state_menu == 3)
+        {
+            SM_get_data();
+            SM_mpu();
+        	if (state_mpu == 7) {sprintf(direction, "UP");}
+			if (state_mpu == 8) {sprintf(direction, "DOWN");}
+			if (state_mpu == 9) {sprintf(direction, "LEFT");}
+			if (state_mpu == 10) {sprintf(direction, "RIGHT");}
+
+	    	sprintf(str_moves, "Moves : %d", num_moves);
+	    	Display_print0(displayHandle, 1, 2, str_moves);
+	    	Display_print0(displayHandle, 3, 2, direction);
+
+        }
+
+        else if (state_menu == 4)
+        {
+        	Display_print0(displayHandle, 4, 2, "VICTORY"); 	// show victory screen
+        	Task_sleep(2 * 1000000/Clock_tickPeriod);    		// shows it for 2 seconds
+        }
+
+        else if (state_menu == 5)
+        {
+        	Display_print0(displayHandle, 4, 2, "DEFEAT"); 		// show defeat screen
+        	Task_sleep(2 * 1000000/Clock_tickPeriod);    		// shows it for 2 seconds
+        }
 
     	/*
     	sprintf(echo_msg,"id:266,light:%lf\n\r", opt3001_get_data(&i2cMPU));   // CSV-format
@@ -382,11 +419,14 @@ void SM_b1() {
         break;
 
         case 4:     // send info
-            sprintf(payload, "event:%s", direction);
-            //Send6LoWPAN(0x1234, payload, strlen(payload));        //Send message
-            System_printf("Direction sent: %s\n", payload);
-            System_flush();
-            StartReceive6LoWPAN();      //Put radio back to reception mode
+        	if (state_menu == 2)
+        	{
+        		sprintf(payload, "event:%s", direction);
+	            //Send6LoWPAN(0x1234, payload, strlen(payload));        //Send message
+	            System_printf("Direction sent: %s\n", payload);
+	            System_flush();
+	            StartReceive6LoWPAN();      //Put radio back to reception mode  
+        	}
             state_b1 = 5;
         break;
 
@@ -451,6 +491,57 @@ void SM_bp() {
     }
 }
 
+void SM_menu() {
+	switch (state_menu) {
+		case 0:		// empty screen / power turned off
+			if (state_bp == 2)		// power button was pressed -> turn the screen on
+			{
+				state_menu = 1;
+			}
+		case 1:		// display menu
+			if (state_b1 == 4)
+			{
+				// button was pressed, go to next option
+				state_menu = 2;
+			}
+			if (state_bp == 2)
+			{
+				// choose current option (start the game)
+				state_menu = 3;
+			}
+		case 2:
+			if (state_b1 == 4)
+			{
+				// button was pressed, go to previous option
+				state_menu = 1;
+			}
+			if (state_bp == 2)
+			{
+				// choose current option (turn power off)
+				state_menu = 0;
+			}
+		case 3:		// display game window
+			if (result == 1)
+			{
+				state_menu = 4;		// won game
+			}
+			if (result == 0)
+			{
+				state_menu = 5;		// lost game
+			}
+			if (state_bp == 2)
+			{
+				state_menu = 1;		// power button was pressed in the middle of the game
+			}						// -> go to main menu
+		case 4:
+			result = -1;			// reset result variable
+			state_menu = 1;			// show victory screen and go to main menu
+		case 5:
+			result = -1;			// reset result variable
+			state_menu = 1;			// show defeat screen and go to main menu
+	}
+}
+
 
 /* Communication Task */
 Void commTaskFxn(UArg arg0, UArg arg1) {
@@ -470,14 +561,14 @@ Void commTaskFxn(UArg arg0, UArg arg1) {
             System_printf(payload);                        // Print received message to console screen
             System_flush();
         }
-        /*
+        
         if (payload == "266,WIN") {
-            //ggez
+            result = 1; 	// won game
         }
         if (payload == "266,LOST GAME") {
-            //ggs
+            result = 0;		// lost game
         }
-        */
+        
     }
 }
 
