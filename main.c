@@ -16,13 +16,11 @@
 #include <ti/drivers/power/PowerCC26XX.h>
 #include <ti/mw/display/Display.h>
 #include <ti/mw/display/DisplayExt.h>
-#include <ti/drivers/UART.h>
 #include <ti/drivers/i2c/I2CCC26XX.h>
 
 /* Board Header files */
 #include "Board.h"
 #include "wireless/comm_lib.h"
-#include "sensors/opt3001.h"
 #include "sensors/mpu9250.h"
 
 /* Task */
@@ -68,34 +66,36 @@ PIN_Config ledConfig[] = {
 
 
 // Global variables
-int state_data = 0;
+uint8_t state_data = 0;
 
-int state_mpu = 0;
-unsigned long t_mpu = 0;
-unsigned long t_0_mpu = 0;
-unsigned long t_error = 16000;
+uint8_t state_mpu = 0;
+uint32_t t_mpu = 0;
+uint32_t t_0_mpu = 0;
+uint32_t t_error = 10000;
 float ax, ay, az, gx, gy, gz;
 
-char direction[10] = "", str_moves[10] = "0";
-int num_moves = 0;
+char direction[10] = "", str_moves[4] = "0";
+uint8_t num_moves = 0;
 
-int state_bp = 0;
-unsigned long t_bp = 0;
-unsigned long t_0_bp = 0;
-uint32_t value_bp = 1;
+uint8_t state_bp = 0;
+uint32_t t_bp = 0;
+uint32_t t_0_bp = 0;
+uint8_t value_bp = 1;
 
-int state_b1 = 0;
-unsigned long t_b1 = 0;
-unsigned long t_0_b1 = 0;
+uint8_t state_b1 = 0;
+uint32_t t_b1 = 0;
+uint32_t t_0_b1 = 0;
 uint8_t value_b1;
 
-int state_menu = 0;
+uint8_t state_menu = 0;
 
-unsigned long t_debounce = 500;
-unsigned long t_longhold = 150000;
+uint32_t t_debounce = 500;
+uint32_t t_longhold = 150000;
 
 char payload[16];
-int result = -1;
+int8_t game_result = -1;
+
+uint8_t next_case;
 
 // Other global stuff
 I2C_Handle i2cMPU; // INTERFACE FOR MPU9250 SENSOR
@@ -104,6 +104,9 @@ void SM_get_data();
 void SM_mpu();
 void SM_b1();
 void SM_bp();
+void SM_menu(Display_Handle displayHandle);
+
+
 
 /* Task Functions */
 Void labTaskFxn(UArg arg0, UArg arg1) {
@@ -154,12 +157,14 @@ Void labTaskFxn(UArg arg0, UArg arg1) {
 
 
     // display setup
+    
     Display_Params params;
 	Display_Params_init(&params);
 	params.lineClearMode = DISPLAY_CLEAR_BOTH;
 
 	Display_Handle displayHandle = Display_open(Display_Type_LCD, &params);
     //sprintf(direction, "START");
+    
 
     /*
 	if (displayHandle) {
@@ -208,29 +213,32 @@ Void labTaskFxn(UArg arg0, UArg arg1) {
 
         SM_b1();
         SM_bp();
-        SM_menu();
+        SM_menu(displayHandle);
 
-        if (state_menu == 0)
-        {
-        	Display_clear(displayHandle); 	// empty the screen
-        }
-
-        else if (state_menu == 1)
-        {
+        if (state_menu == 1) {
         	Display_print0(displayHandle, 1, 2, "Start <-");
         	Display_print0(displayHandle, 2, 2, "Exit"); 	// show menu
         }
 
-        else if (state_menu == 2)
-        {
+        else if (state_menu == 2) {
         	Display_print0(displayHandle, 1, 2, "Start");
         	Display_print0(displayHandle, 2, 2, "Exit  <-"); 	// show menu
+            
         }
 
-        else if (state_menu == 3)
-        {
+        else if (state_menu == 3) {
             SM_get_data();
             SM_mpu();
+
+            if (state_b1 == 4 && (strlen(direction) >= 2)) {
+                    ++num_moves;
+                    sprintf(payload, "event:%s", direction);
+                    Send6LoWPAN(0xFFFF, payload, strlen(payload));        //Send message
+                    //System_printf("Direction sent: %s\n", payload);
+                    //System_flush();
+                    StartReceive6LoWPAN();      //Put radio back to reception mode
+            }
+
         	if (state_mpu == 7) {sprintf(direction, "UP");}
 			if (state_mpu == 8) {sprintf(direction, "DOWN");}
 			if (state_mpu == 9) {sprintf(direction, "LEFT");}
@@ -239,17 +247,14 @@ Void labTaskFxn(UArg arg0, UArg arg1) {
 	    	sprintf(str_moves, "Moves : %d", num_moves);
 	    	Display_print0(displayHandle, 1, 2, str_moves);
 	    	Display_print0(displayHandle, 3, 2, direction);
-
         }
 
-        else if (state_menu == 4)
-        {
+        else if (state_menu == 4) {
         	Display_print0(displayHandle, 4, 2, "VICTORY"); 	// show victory screen
         	Task_sleep(2 * 1000000/Clock_tickPeriod);    		// shows it for 2 seconds
         }
 
-        else if (state_menu == 5)
-        {
+        else if (state_menu == 5) {
         	Display_print0(displayHandle, 4, 2, "DEFEAT"); 		// show defeat screen
         	Task_sleep(2 * 1000000/Clock_tickPeriod);    		// shows it for 2 seconds
         }
@@ -297,19 +302,19 @@ void SM_mpu() {
         break;
 
         case 2:     // check direction
-            if (ay < -0.5 && ax > -0.5 && ax < 0.5) {
+            if (ay < -0.65 && ax > -0.5 && ax < 0.5) {
                 t_mpu = Clock_getTicks();
                 state_mpu = 3;
             }
-            else if (ay > 0.5 && ax > -0.5 && ax < 0.5) {
+            else if (ay > 0.65 && ax > -0.5 && ax < 0.5) {
                 t_mpu = Clock_getTicks();
                 state_mpu = 4;
             }
-            else if (ax < -0.5 && ay > -0.5 && ay < 0.5) {
+            else if (ax < -0.65 && ay > -0.5 && ay < 0.5) {
                 t_mpu = Clock_getTicks();
                 state_mpu = 5;
             }
-            else if (ax > 0.5 && ay > -0.5 && ay < 0.5) {
+            else if (ax > 0.65 && ay > -0.5 && ay < 0.5) {
                 t_mpu = Clock_getTicks();
                 state_mpu = 6;
             }
@@ -321,8 +326,6 @@ void SM_mpu() {
         case 3:     // error prevention UP
             t_mpu = Clock_getTicks();
             if (ay > -0.5) {
-                System_printf("Error prevention\n");
-                System_flush();
                 state_mpu = 0;
             }
             else if (t_mpu - t_0_mpu > t_error) {
@@ -333,8 +336,6 @@ void SM_mpu() {
         case 4:     // error prevention DOWN
             t_mpu = Clock_getTicks();
             if (ay < 0.5) {
-                System_printf("Error prevention\n");
-                System_flush();
                 state_mpu = 0;
             }
             else if (t_mpu - t_0_mpu > t_error) {
@@ -345,8 +346,6 @@ void SM_mpu() {
         case 5:     // error prevention LEFT
             t_mpu = Clock_getTicks();
             if (ax > -0.5) {
-                System_printf("Error prevention\n");
-                System_flush();
                 state_mpu = 0;
             }
             else if (t_mpu - t_0_mpu > t_error) {
@@ -357,8 +356,6 @@ void SM_mpu() {
         case 6:     // error prevention RIGHT
             t_mpu = Clock_getTicks();
             if (ax < 0.5) {
-                System_printf("Error prevention\n");
-                System_flush();
                 state_mpu = 0;
             }
             else if (t_mpu - t_0_mpu > t_error) {
@@ -383,7 +380,6 @@ void SM_mpu() {
         break;
 
         case 11:             // back to normal
-            ++num_moves;
             state_mpu = 0;
         break;
     }
@@ -419,14 +415,6 @@ void SM_b1() {
         break;
 
         case 4:     // send info
-        	if (state_menu == 2)
-        	{
-        		sprintf(payload, "event:%s", direction);
-	            //Send6LoWPAN(0x1234, payload, strlen(payload));        //Send message
-	            System_printf("Direction sent: %s\n", payload);
-	            System_flush();
-	            StartReceive6LoWPAN();      //Put radio back to reception mode  
-        	}
             state_b1 = 5;
         break;
 
@@ -491,54 +479,68 @@ void SM_bp() {
     }
 }
 
-void SM_menu() {
+void SM_menu(Display_Handle displayHandle) {
 	switch (state_menu) {
 		case 0:		// empty screen / power turned off
-			if (state_bp == 2)		// power button was pressed -> turn the screen on
+			if (state_bp == 4)		// power button was pressed -> turn the screen on
 			{
 				state_menu = 1;
 			}
+        break;
+
 		case 1:		// display menu
-			if (state_b1 == 4)
-			{
-				// button was pressed, go to next option
-				state_menu = 2;
-			}
-			if (state_bp == 2)
-			{
-				// choose current option (start the game)
-				state_menu = 3;
-			}
+			if (state_b1 == 4)  {   // button was pressed, go to next option}
+                next_case = 2;
+                state_menu = 6;
+            } 
+			if (state_bp == 4) {    // choose current option (start the game)
+                sprintf(direction, "");
+                num_moves = 0;
+                next_case = 3;
+                state_menu = 6;
+            } 
+        break;
+
 		case 2:
-			if (state_b1 == 4)
-			{
-				// button was pressed, go to previous option
-				state_menu = 1;
-			}
-			if (state_bp == 2)
-			{
-				// choose current option (turn power off)
-				state_menu = 0;
-			}
-		case 3:		// display game window
-			if (result == 1)
-			{
-				state_menu = 4;		// won game
-			}
-			if (result == 0)
-			{
-				state_menu = 5;		// lost game
-			}
-			if (state_bp == 2)
-			{
-				state_menu = 1;		// power button was pressed in the middle of the game
-			}						// -> go to main menu
+            if (state_b1 == 4) {    // button was pressed, go to previous option
+                next_case = 1;
+                state_menu = 6;
+            }
+            if (state_bp == 4) {    // choose current option (turn power off)
+                next_case = 0;
+                state_menu = 6;
+            }
+        break;
+
+        case 3:        // display game window
+            if (game_result == 1) {
+                next_case = 4;
+                state_menu = 6;        // won game
+            }
+            if (game_result == 0) {
+                next_case = 5;
+                state_menu = 6;        // lost game
+            }
+            if (state_bp == 4)  {
+                next_case = 1;
+                state_menu = 6;        // power button was pressed in the middle of the game
+            }                        // -> go to main menu
+        break;
+
 		case 4:
-			result = -1;			// reset result variable
+			game_result = -1;			// reset game_result variable
 			state_menu = 1;			// show victory screen and go to main menu
+        break;
+
 		case 5:
-			result = -1;			// reset result variable
+			game_result = -1;			// reset game_result variable
 			state_menu = 1;			// show defeat screen and go to main menu
+        break;
+
+        case 6:
+            Display_clear(displayHandle);
+            state_menu = next_case;
+        break;
 	}
 }
 
@@ -549,8 +551,8 @@ Void commTaskFxn(UArg arg0, UArg arg1) {
     char payload[16];     // Buffer
     uint16_t senderAddr;
 
-	int32_t result = StartReceive6LoWPAN();     // Radio to receive mode
-	if(result != true) {
+	int32_t receive_rf = StartReceive6LoWPAN();     // Radio to receive mode
+	if(receive_rf != true) {
 		System_abort("Wireless receive mode failed");
 	}
 
@@ -563,10 +565,10 @@ Void commTaskFxn(UArg arg0, UArg arg1) {
         }
         
         if (payload == "266,WIN") {
-            result = 1; 	// won game
+            game_result = 1; 	// won game
         }
         if (payload == "266,LOST GAME") {
-            result = 0;		// lost game
+            game_result = 0;		// lost game
         }
         
     }
@@ -584,7 +586,7 @@ Int main(void) {
 
     Board_initI2C();        // initialize i2c
 
-    Board_initUART();       // initialize UART
+    //Board_initUART();       // initialize UART
 
     hMpuPin = PIN_open(&MpuPinState, MpuPinConfig); // open MPU power pin
     if (hMpuPin == NULL) {

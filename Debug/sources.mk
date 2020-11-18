@@ -125,6 +125,5 @@ S64_DEPS__QUOTED :=
 SUBDIRS := \
 . \
 sensors \
-src/sysbios \
 wireless \
 
