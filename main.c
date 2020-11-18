@@ -92,6 +92,8 @@ uint8_t value_b1;
 unsigned long t_debounce = 500;
 unsigned long t_longhold = 150000;
 
+char payload[16];
+
 // Other global stuff
 I2C_Handle i2cMPU; // INTERFACE FOR MPU9250 SENSOR
 I2C_Params i2cMPUParams;
@@ -254,57 +256,32 @@ void SM_mpu() {
 
         case 1:     // start 
             t_0_mpu = Clock_getTicks();
-            state_mpu = 3;
+            state_mpu = 2;
         break;
 
-        case 2:     // get data
-            
-        break;
-
-        case 3:     // check direction
+        case 2:     // check direction
             if (ay < -0.5 && ax > -0.5 && ax < 0.5) {
                 t_mpu = Clock_getTicks();
-                state_mpu = 9;
+                state_mpu = 3;
             }
             else if (ay > 0.5 && ax > -0.5 && ax < 0.5) {
                 t_mpu = Clock_getTicks();
-                state_mpu = 10;
+                state_mpu = 4;
             }
             else if (ax < -0.5 && ay > -0.5 && ay < 0.5) {
                 t_mpu = Clock_getTicks();
-                state_mpu = 11;
+                state_mpu = 5;
             }
             else if (ax > 0.5 && ay > -0.5 && ay < 0.5) {
                 t_mpu = Clock_getTicks();
-                state_mpu = 12;
+                state_mpu = 6;
             }
             else {
                 state_mpu = 0;
             }
         break;
 
-        case 4:         // UP
-            if (ay > -0.5) {state_mpu = 8;}
-        break;
-
-        case 5:         // DOWN
-            if (ay < 0.5) {state_mpu = 8;}
-        break;
-
-        case 6:         // LEFT
-            if (ax > -0.5) {state_mpu = 8;}
-        break;
-
-        case 7:         // RIGHT
-            if (ax < 0.5) {state_mpu = 8;}
-        break;
-
-        case 8:             // back to normal
-            ++num_moves;
-            state_mpu = 0;
-        break;
-
-        case 9:
+        case 3:     // error prevention UP
             t_mpu = Clock_getTicks();
             if (ay > -0.5) {
                 System_printf("Error prevention\n");
@@ -312,11 +289,11 @@ void SM_mpu() {
                 state_mpu = 0;
             }
             else if (t_mpu - t_0_mpu > t_error) {
-                state_mpu = 4;
+                state_mpu = 7;
             }
         break;
 
-        case 10:
+        case 4:     // error prevention DOWN
             t_mpu = Clock_getTicks();
             if (ay < 0.5) {
                 System_printf("Error prevention\n");
@@ -324,11 +301,11 @@ void SM_mpu() {
                 state_mpu = 0;
             }
             else if (t_mpu - t_0_mpu > t_error) {
-                state_mpu = 5;
+                state_mpu = 8;
             }
         break;
 
-        case 11:
+        case 5:     // error prevention LEFT
             t_mpu = Clock_getTicks();
             if (ax > -0.5) {
                 System_printf("Error prevention\n");
@@ -336,11 +313,11 @@ void SM_mpu() {
                 state_mpu = 0;
             }
             else if (t_mpu - t_0_mpu > t_error) {
-                state_mpu = 6;
+                state_mpu = 9;
             }
         break;
 
-        case 12:
+        case 6:     // error prevention RIGHT
             t_mpu = Clock_getTicks();
             if (ax < 0.5) {
                 System_printf("Error prevention\n");
@@ -348,8 +325,29 @@ void SM_mpu() {
                 state_mpu = 0;
             }
             else if (t_mpu - t_0_mpu > t_error) {
-                state_mpu = 7;
+                state_mpu = 10;
             }
+        break;
+
+        case 7:         // active UP
+            if (ay > -0.5) {state_mpu = 11;}
+        break;
+
+        case 8:         // active DOWN
+            if (ay < 0.5) {state_mpu = 11;}
+        break;
+
+        case 9:         // active LEFT
+            if (ax > -0.5) {state_mpu = 11;}
+        break;
+
+        case 10:         // active RIGHT
+            if (ax < 0.5) {state_mpu = 11;}
+        break;
+
+        case 11:             // back to normal
+            ++num_moves;
+            state_mpu = 0;
         break;
     }
 }
@@ -361,22 +359,19 @@ void SM_b1() {
             state_b1 = 1;
         break;
 
-        case 1:
+        case 1:     // button press
             value_b1 = PIN_getInputValue(Board_BUTTON0);
             if (value_b1 == 0) {
                 state_b1 = 2;
             }
-            else {state_b1 = 0;}
         break;
 
-        case 2:
-            System_printf("Button 1 pressed.\n");
-            System_flush();
+        case 2:     // debounce timer start
             t_0_b1 = Clock_getTicks();
             state_b1 = 3;
         break;
 
-        case 3:
+        case 3:     // debounce check
             value_b1 = PIN_getInputValue(Board_BUTTON0);
             t_b1 = Clock_getTicks();
 
@@ -386,14 +381,21 @@ void SM_b1() {
             }
         break;
 
-        case 4:
-            value_b1 = PIN_getInputValue(Board_BUTTON0);
-            if (value_b1 != 0) {state_b1 = 5;}
+        case 4:     // send info
+            sprintf(payload, "event:%s", direction);
+            //Send6LoWPAN(0x1234, payload, strlen(payload));        //Send message
+            System_printf("Direction sent: %s\n", payload);
+            System_flush();
+            StartReceive6LoWPAN();      //Put radio back to reception mode
+            state_b1 = 5;
         break;
 
-        case 5:
-            System_printf("Button 1 released.\n");
-            System_flush();
+        case 5:     // button held down
+            value_b1 = PIN_getInputValue(Board_BUTTON0);
+            if (value_b1 != 0) {state_b1 = 6;}
+        break;
+
+        case 6:     // button released
             state_b1 = 0;
         break;
     }
@@ -405,22 +407,21 @@ void SM_bp() {
             state_bp = 1;
         break;
 
-        case 1:
+        case 1:     // button press
             value_bp = PIN_getInputValue(Board_BUTTON1);
             if (value_bp == 0) {
                 state_bp = 2;
             }
-            else {state_bp = 0;}
         break;
 
-        case 2:
+        case 2:     // long press timer start
             System_printf("Button power pressed.\n");
             System_flush();
             t_0_bp = Clock_getTicks();
             state_bp = 3;
         break;
 
-        case 3:
+        case 3:     // long press check
             value_bp = PIN_getInputValue(Board_BUTTON1);
             t_bp = Clock_getTicks();
 
@@ -430,14 +431,19 @@ void SM_bp() {
             }
         break;
 
-        case 4:
+        case 4:     //  button pressed
             System_printf("Power button activated.\n");
             System_flush();
-            value_bp = PIN_getInputValue(Board_BUTTON1);
-            if (value_bp != 0) {state_bp = 5;}
+            // do something (shut down?)
+            state_bp = 5;
         break;
 
-        case 5:
+        case 5:     // button held down
+            value_bp = PIN_getInputValue(Board_BUTTON1);
+            if (value_bp != 0) {state_bp = 6;}
+        break;
+
+        case 6:     // button released
             System_printf("Button power released.\n");
             System_flush();
             state_bp = 0;
@@ -445,25 +451,6 @@ void SM_bp() {
     }
 }
 
-
-/* Button Task */
-/*
-void buttonFxn(PIN_Handle handle, PIN_Id pinId) {
-    char payload[16];
-    sprintf(payload, "event:%s", direction);
-    //Send6LoWPAN(0x1234, payload, strlen(payload));        //Send message
-    System_printf("Direction sent: %s\n", payload);
-    System_flush();
-    StartReceive6LoWPAN();      //Put radio back to reception mode
-}
-
-
-// Power Button Task 
-void PbuttonFxn(PIN_Handle handle, PIN_Id pinId) {
-    System_printf("Power Button Pressed\n");
-    System_flush();
-}
-*/
 
 /* Communication Task */
 Void commTaskFxn(UArg arg0, UArg arg1) {
@@ -527,16 +514,6 @@ Int main(void) {
         if(!ledHandle) {
             System_abort("Error initializing LED pins\n");
         }
-
-        /*
-        if (PIN_registerIntCb(buttonHandle, &buttonFxn) != 0) {       // interrupt handler for the button
-            System_abort("Error registering button callback function");
-        }
-
-        if (PIN_registerIntCb(PbuttonHandle, &PbuttonFxn) != 0) {       // interrupt handler for the button
-            System_abort("Error registering button callback function");
-        }
-        */
 
     /* Task */
     Task_Params_init(&labTaskParams);
