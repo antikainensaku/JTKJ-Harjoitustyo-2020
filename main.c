@@ -92,7 +92,7 @@ uint8_t state_menu = 0;
 uint32_t t_debounce = 500;
 uint32_t t_longhold = 150000;
 
-char payload[16];
+char payload_send[16];
 int8_t game_result = -1;
 
 uint8_t next_case;
@@ -232,9 +232,9 @@ Void labTaskFxn(UArg arg0, UArg arg1) {
 
             if (state_b1 == 4 && (strlen(direction) >= 2)) {
                     ++num_moves;
-                    sprintf(payload, "event:%s", direction);
-                    Send6LoWPAN(0xFFFF, payload, strlen(payload));        //Send message
-                    //System_printf("Direction sent: %s\n", payload);
+                    sprintf(payload_send, "event:%s", direction);
+                    Send6LoWPAN(0x1234, payload_send, strlen(payload_send));        //Send message
+                    //System_printf("Direction sent: %s\n", payload_send);
                     //System_flush();
                     StartReceive6LoWPAN();      //Put radio back to reception mode
             }
@@ -548,7 +548,7 @@ void SM_menu(Display_Handle displayHandle) {
 /* Communication Task */
 Void commTaskFxn(UArg arg0, UArg arg1) {
 
-    char payload[16];     // Buffer
+    char payload_receive[16];     // Buffer
     uint16_t senderAddr;
 
 	int32_t receive_rf = StartReceive6LoWPAN();     // Radio to receive mode
@@ -558,19 +558,21 @@ Void commTaskFxn(UArg arg0, UArg arg1) {
 
     while (1) {
     	if (GetRXFlag() == true) {          // If true, we have a message
-            memset(payload,0,16);                        // Empty the buffer
-            Receive6LoWPAN(&senderAddr, payload, 16);    // Read message into the buffer
-            System_printf(payload);                        // Print received message to console screen
+            memset(payload_receive,0,16);                        // Empty the buffer
+            Receive6LoWPAN(&senderAddr, payload_receive, 16);    // Read message into the buffer
+            System_printf("payload: %s payload[4]: %c", payload_receive, payload_receive[4]);                        // Print received message to console screen
             System_flush();
         }
-        
-        if (payload == "266,WIN") {
+        uint32_t win = "266,WIN";
+        uint32_t lost = "266,LOST GAME";
+        if (payload_receive == "266,WIN")  {
+            System_printf("if-lause lol\n");                        // Print received message to console screen
+            System_flush();
             game_result = 1; 	// won game
         }
-        if (payload == "266,LOST GAME") {
+        if (payload_receive == "266,LOST GAME") {
             game_result = 0;		// lost game
         }
-        
     }
 }
 
