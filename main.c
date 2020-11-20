@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <time.h>
+#include <string.h>
 
 /* XDCtools files */
 #include <xdc/std.h>
@@ -66,36 +67,40 @@ PIN_Config ledConfig[] = {
 
 
 // Global variables
+char direction[10] = ""; 
+char str_moves[4] = "0";
+char payload_send[16];
+uint8_t num_moves = 0;
+uint8_t next_case;
+int8_t game_result = -1;
+
+// variables for SM_get_data
 uint8_t state_data = 0;
 
+// variables for SM_mpu
 uint8_t state_mpu = 0;
 uint32_t t_mpu = 0;
 uint32_t t_0_mpu = 0;
-uint32_t t_error = 10000;
+uint32_t t_error = 10000;   // error
 float ax, ay, az, gx, gy, gz;
 
-char direction[10] = "", str_moves[4] = "0";
-uint8_t num_moves = 0;
-
+// variables for SM_bp
 uint8_t state_bp = 0;
 uint32_t t_bp = 0;
 uint32_t t_0_bp = 0;
 uint8_t value_bp = 1;
+uint32_t t_longhold = 150000;
+uint32_t t_shorthold = 500;
 
+// variables for SM_b1
 uint8_t state_b1 = 0;
 uint32_t t_b1 = 0;
 uint32_t t_0_b1 = 0;
 uint8_t value_b1;
-
-uint8_t state_menu = 0;
-
 uint32_t t_debounce = 500;
-uint32_t t_longhold = 150000;
 
-char payload_send[16];
-int8_t game_result = -1;
-
-uint8_t next_case;
+// variables for SM_menu
+uint8_t state_menu = 0;
 
 // Other global stuff
 I2C_Handle i2cMPU; // INTERFACE FOR MPU9250 SENSOR
@@ -105,8 +110,6 @@ void SM_mpu();
 void SM_b1();
 void SM_bp();
 void SM_menu(Display_Handle displayHandle);
-
-
 
 /* Task Functions */
 Void labTaskFxn(UArg arg0, UArg arg1) {
@@ -127,9 +130,6 @@ Void labTaskFxn(UArg arg0, UArg arg1) {
     I2C_close(i2c); // close 12C for other sensor
     */
 
-    /*
-    I2C_Handle i2cMPU; // INTERFACE FOR MPU9250 SENSOR
-	I2C_Params i2cMPUParams; */
 	I2C_Params_init(&i2cMPUParams);
 	i2cMPUParams.bitRate = I2C_400kHz;
 	i2cMPUParams.custom = (uintptr_t)&i2cMPUCfg;
@@ -145,7 +145,6 @@ Void labTaskFxn(UArg arg0, UArg arg1) {
 	System_printf("MPU9250: Power ON\n");
 	System_flush();
 
-
 	System_printf("MPU9250: Setup and calibration...\n"); // mpu setup and calibration
 	System_flush();
 	mpu9250_setup(&i2cMPU);
@@ -154,29 +153,14 @@ Void labTaskFxn(UArg arg0, UArg arg1) {
 
 	I2C_close(i2cMPU); // close I2C for mpu
 
-
-
-    // display setup
+    // Display setup
     
     Display_Params params;
 	Display_Params_init(&params);
 	params.lineClearMode = DISPLAY_CLEAR_BOTH;
-
 	Display_Handle displayHandle = Display_open(Display_Type_LCD, &params);
-    //sprintf(direction, "START");
-    
 
-    /*
-	if (displayHandle) {
-	      Display_print0(displayHandle, 5, 3, "Shall we play");
-	      Display_print0(displayHandle, 6, 5, "..a game?");
-
-	      Task_sleep(3 * 1000000/Clock_tickPeriod);     // shows it for 3 seconds
-	      Display_clear(displayHandle);                 // clears the display
-	}
-    */
-
-    // setup UART (check for right COM port)
+    // UART setup (check for right COM port)
 	/*
 	UART_Handle 	uart;
     UART_Params 	uartParams;
@@ -200,30 +184,18 @@ Void labTaskFxn(UArg arg0, UArg arg1) {
 
 
     while (1) {
-    	/*								 **Light sensor value printed to display-code** 
-    	char strlux[40];
-
-    	sprintf(strlux, "%lf lux", opt3001_get_data(&i2c));     // gets lux value from opt3001_get_data
-    	System_printf("%s\n", strlux);                          // and prints it
-    	System_flush();
-
-    	Display_print0(displayHandle, 1, 1, strlux);        // prints lux value to display
-    	Display_clear(displayHandle);                 // clears the display
-		*/
-
         SM_b1();
         SM_bp();
         SM_menu(displayHandle);
 
-        if (state_menu == 1) {
+        if (state_menu == 1) {          // show menu
         	Display_print0(displayHandle, 1, 2, "Start <-");
-        	Display_print0(displayHandle, 2, 2, "Exit"); 	// show menu
+        	Display_print0(displayHandle, 2, 2, "Exit");
         }
 
-        else if (state_menu == 2) {
+        else if (state_menu == 2) {     // show menu  
         	Display_print0(displayHandle, 1, 2, "Start");
-        	Display_print0(displayHandle, 2, 2, "Exit  <-"); 	// show menu
-            
+        	Display_print0(displayHandle, 2, 2, "Exit  <-");   
         }
 
         else if (state_menu == 3) {
@@ -231,12 +203,10 @@ Void labTaskFxn(UArg arg0, UArg arg1) {
             SM_mpu();
 
             if (state_b1 == 4 && (strlen(direction) >= 2)) {
-                    ++num_moves;
-                    sprintf(payload_send, "event:%s", direction);
-                    Send6LoWPAN(0x1234, payload_send, strlen(payload_send));        //Send message
-                    //System_printf("Direction sent: %s\n", payload_send);
-                    //System_flush();
-                    StartReceive6LoWPAN();      //Put radio back to reception mode
+                ++num_moves;
+                sprintf(payload_send, "event:%s", direction);
+                Send6LoWPAN(0x1234, payload_send, strlen(payload_send));        //Send message
+                StartReceive6LoWPAN();          //Put radio back to reception mode
             }
 
         	if (state_mpu == 7) {sprintf(direction, "UP");}
@@ -250,21 +220,39 @@ Void labTaskFxn(UArg arg0, UArg arg1) {
         }
 
         else if (state_menu == 4) {
-        	Display_print0(displayHandle, 4, 2, "VICTORY"); 	// show victory screen
-        	Task_sleep(2 * 1000000/Clock_tickPeriod);    		// shows it for 2 seconds
+            int i;
+            for (i = 1; i < 10; ++i) {
+                Display_print0(displayHandle, 4, 2, "VICTORY"); 	// show victory screen
+        	    Task_sleep(1 * 200000/Clock_tickPeriod);
+                Display_print0(displayHandle, 5, 2, ":");
+                Task_sleep(1 * 200000/Clock_tickPeriod); 
+                Display_print0(displayHandle, 5, 2, ":)");
+                Task_sleep(1 * 200000/Clock_tickPeriod); 
+                Display_print0(displayHandle, 5, 2, ":) :");
+                Task_sleep(1 * 200000/Clock_tickPeriod); 
+                Display_print0(displayHandle, 5, 2, ":) :)");
+                Task_sleep(1 * 200000/Clock_tickPeriod); 
+                Display_clear(displayHandle);
+            }
         }
 
         else if (state_menu == 5) {
-        	Display_print0(displayHandle, 4, 2, "DEFEAT"); 		// show defeat screen
-        	Task_sleep(2 * 1000000/Clock_tickPeriod);    		// shows it for 2 seconds
+        	int k;
+            for (k = 1; k < 10; ++k) {
+                Display_print0(displayHandle, 4, 2, "VICTORY"); 	// show victory screen
+        	    Task_sleep(1 * 200000/Clock_tickPeriod);
+                Display_print0(displayHandle, 5, 2, ":");
+                Task_sleep(1 * 200000/Clock_tickPeriod); 
+                Display_print0(displayHandle, 5, 2, ":(");
+                Task_sleep(1 * 200000/Clock_tickPeriod); 
+                Display_print0(displayHandle, 5, 2, ":( :");
+                Task_sleep(1 * 200000/Clock_tickPeriod); 
+                Display_print0(displayHandle, 5, 2, ":( :(");
+                Task_sleep(1 * 200000/Clock_tickPeriod); 
+                Display_clear(displayHandle);
+            }
         }
-
-    	/*
-    	sprintf(echo_msg,"id:266,light:%lf\n\r", opt3001_get_data(&i2cMPU));   // CSV-format
-    	UART_write(uart, echo_msg, strlen(echo_msg));       // writes to UART
-		*/
     }
-	//PIN_setOutputValue(hMpuPin,Board_MPU_POWER, Board_MPU_POWER_OFF);
 }
 
 void SM_get_data() {
@@ -442,38 +430,46 @@ void SM_bp() {
             }
         break;
 
-        case 2:     // long press timer start
-            System_printf("Button power pressed.\n");
-            System_flush();
+        case 2:     // timer start
             t_0_bp = Clock_getTicks();
             state_bp = 3;
         break;
 
-        case 3:     // long press check
+        case 3:     // short press check
             value_bp = PIN_getInputValue(Board_BUTTON1);
             t_bp = Clock_getTicks();
 
             if (value_bp != 0) {state_bp = 0;}
-            else if (t_bp - t_0_bp > t_longhold) {
+            else if (t_bp - t_0_bp > t_shorthold) {
                 state_bp = 4;
             }
         break;
 
-        case 4:     //  button pressed
-            System_printf("Power button activated.\n");
-            System_flush();
-            // do something (shut down?)
+        case 4:         // button short press
             state_bp = 5;
         break;
 
-        case 5:     // button held down
+        case 5:     // long press check
             value_bp = PIN_getInputValue(Board_BUTTON1);
-            if (value_bp != 0) {state_bp = 6;}
+            t_bp = Clock_getTicks();
+
+            if (value_bp != 0) {state_bp = 8;}
+            else if (t_bp - t_0_bp > t_longhold) {
+                state_bp = 6;
+            }
         break;
 
-        case 6:     // button released
-            System_printf("Button power released.\n");
-            System_flush();
+        case 6:     //  button long pressed
+            // do something (shut down?)
+            state_bp = 7;
+        break;
+
+        case 7:     // button held down
+            value_bp = PIN_getInputValue(Board_BUTTON1);
+            if (value_bp != 0) {state_bp = 8;}
+        break;
+
+        case 8:     // button released
             state_bp = 0;
         break;
     }
@@ -482,10 +478,7 @@ void SM_bp() {
 void SM_menu(Display_Handle displayHandle) {
 	switch (state_menu) {
 		case 0:		// empty screen / power turned off
-			if (state_bp == 4)		// power button was pressed -> turn the screen on
-			{
-				state_menu = 1;
-			}
+			if (state_bp == 6) {state_menu = 1;}
         break;
 
 		case 1:		// display menu
@@ -521,20 +514,22 @@ void SM_menu(Display_Handle displayHandle) {
                 next_case = 5;
                 state_menu = 6;        // lost game
             }
-            if (state_bp == 4)  {
+            if (state_bp == 6)  {
                 next_case = 1;
-                state_menu = 6;        // power button was pressed in the middle of the game
+                state_menu = 6;        // power button was long pressed in the middle of the game
             }                        // -> go to main menu
         break;
 
 		case 4:
 			game_result = -1;			// reset game_result variable
-			state_menu = 1;			// show victory screen and go to main menu
+            next_case = 1;
+			state_menu = 6;			// show victory screen and go to main menu
         break;
 
 		case 5:
 			game_result = -1;			// reset game_result variable
-			state_menu = 1;			// show defeat screen and go to main menu
+            next_case = 1;
+			state_menu = 6;			// show defeat screen and go to main menu
         break;
 
         case 6:
@@ -544,14 +539,12 @@ void SM_menu(Display_Handle displayHandle) {
 	}
 }
 
-
 /* Communication Task */
 Void commTaskFxn(UArg arg0, UArg arg1) {
-
     char payload_receive[16];     // Buffer
     uint16_t senderAddr;
+    int32_t receive_rf = StartReceive6LoWPAN();     // Radio to receive mode
 
-	int32_t receive_rf = StartReceive6LoWPAN();     // Radio to receive mode
 	if(receive_rf != true) {
 		System_abort("Wireless receive mode failed");
 	}
@@ -560,19 +553,14 @@ Void commTaskFxn(UArg arg0, UArg arg1) {
     	if (GetRXFlag() == true) {          // If true, we have a message
             memset(payload_receive,0,16);                        // Empty the buffer
             Receive6LoWPAN(&senderAddr, payload_receive, 16);    // Read message into the buffer
-            System_printf("payload: %s payload[4]: %c", payload_receive, payload_receive[4]);                        // Print received message to console screen
-            System_flush();
+            System_printf("Message: %s", payload_receive);
         }
-        uint32_t win = "266,WIN";
-        uint32_t lost = "266,LOST GAME";
-        if (payload_receive == "266,WIN")  {
-            System_printf("if-lause lol\n");                        // Print received message to console screen
-            System_flush();
-            game_result = 1; 	// won game
-        }
-        if (payload_receive == "266,LOST GAME") {
-            game_result = 0;		// lost game
-        }
+
+        uint8_t win = strcmp(payload_receive, "266,WIN");       // if strings match, returns 0
+        uint8_t lost = strcmp(payload_receive, "266,LOST GAME");        // if strings match, returns 0
+
+        if (win == 0)  {game_result = 1;}
+        if (lost == 0) {game_result = 0;}
     }
 }
 
@@ -597,7 +585,7 @@ Int main(void) {
 
     buttonHandle = PIN_open(&buttonState, buttonConfig);    // open and configure the button pin
         if(!buttonHandle) {
-        System_abort("Error initializing button pins\n");
+            System_abort("Error initializing button pins\n");
         }
     
     PbuttonHandle = PIN_open(&PbuttonState, PbuttonConfig);    // open and configure the power button pin
