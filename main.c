@@ -239,7 +239,7 @@ Void labTaskFxn(UArg arg0, UArg arg1) {
         else if (state_menu == 5) {
         	int k;
             for (k = 1; k < 10; ++k) {
-                Display_print0(displayHandle, 4, 2, "VICTORY"); 	// show victory screen
+                Display_print0(displayHandle, 4, 2, "DEFEAT"); 	// show defeat screen
         	    Task_sleep(1 * 200000/Clock_tickPeriod);
                 Display_print0(displayHandle, 5, 2, ":");
                 Task_sleep(1 * 200000/Clock_tickPeriod); 
